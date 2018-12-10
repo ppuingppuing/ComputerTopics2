@@ -24,7 +24,7 @@ void recognition(float * images, float * network, int depth, int size, int * lab
   // Set pointers for weights and biases
   // 1. Input layer
   weights[0] = network;
-  biases[0] = weights[0] + size * IMG_SIZE;
+  biases[0] = weights[0] + sizeIMG_SIZE;
   // 2. Hidden layers
   for(i = 1; i < depth; i++)
   {
@@ -38,10 +38,7 @@ void recognition(float * images, float * network, int depth, int size, int * lab
   // variables in for
   float * input;
   float output[DIGIT_COUNT];
-  
-  //float sum = 0;
-  float32x4_t sum;//change to neon
-  float32x4_t Avec,Bvec;
+  float sum = 0;
 
   int cmVar1 = 0; //variable for code motion
   int cmVar2 = 0; //variable for code motion
@@ -58,20 +55,24 @@ void recognition(float * images, float * network, int depth, int size, int * lab
     clock_gettime(CLOCK_MONOTONIC,&forS);
     for(x = 0; x < size; ++x)
     {
-      sum = vdupq_n_f32(0); //we should reset sum here.
+      sum = 0; //we should reset sum here.
       cmVar1 = IMG_SIZE * x;
-      for(y = 0; y < IMG_SIZE-1; y+=4)
+      for(y = 0; y < IMG_SIZE-1; y+=8)
       {
-        Avec = vld1q_f32(&input[y]);
-        Bvec = vld1q_f32(&weights[0][cmVar1+y]);
-
-        sum = vmlaq_f32(sum,Avec,Bvec);
+        sum += input[y] * weights[0][cmVar1 + y];
+        sum += input[y+1] * weights[0][cmVar1 + y + 1];
+        sum += input[y+2] * weights[0][cmVar1 + y + 2];
+        sum += input[y+3] * weights[0][cmVar1 + y + 3];
+        sum += input[y+4] * weights[0][cmVar1 + y + 4];
+        sum += input[y+5] * weights[0][cmVar1 + y + 5];
+        sum += input[y+6] * weights[0][cmVar1 + y + 6];
+        sum += input[y+7] * weights[0][cmVar1 + y + 7];
       }
       for(;y<IMG_SIZE;++y)
-          sum[0] += input[y] * weights[0][cmVar1+y];
-      sum[0] += sum[1]+sum[2]+sum[3];
-      sum[0] += biases[0][x];
-      hidden_layers[x] = sigmoid(sum[0]);
+          sum += input[y] * weights[0][cmVar1+y];
+
+      sum += biases[0][x];
+      hidden_layers[x] = sigmoid(sum);
     }
     clock_gettime(CLOCK_MONOTONIC,&forE);
     for1_s += (forE.tv_sec - forS.tv_sec) + 1e-9 * (forE.tv_nsec - forS.tv_nsec);
@@ -84,21 +85,24 @@ void recognition(float * images, float * network, int depth, int size, int * lab
       cmVar1 = size == 64 ? (j-1) << 6 : size * (j-1);
       for(x = 0; x < size; ++x)
       {
-       sum = vdupq_n_f32(0); //we should reset sum here.
+       sum = 0; //we should reset sum here.
        cmVar2 = size == 64 ? x << 6 : size * x;
-        for(y = 0; y < size-1; y+=4)
+        for(y = 0; y < size-1; y+=8)
         {
-          Avec = vld1q_f32(&hidden_layers[cmVar1 + y]);
-          Bvec = vld1q_f32(&weights[j][cmVar2+y]);
-          
-          sum = vmlaq_f32(sum, Avec, Bvec );  
+          sum += hidden_layers[cmVar1 + y] * weights[j][cmVar2 + y];
+          sum += hidden_layers[cmVar1 + y + 1] * weights[j][cmVar2 + y + 1];
+          sum += hidden_layers[cmVar1 + y + 2] * weights[j][cmVar2 + y + 2];
+          sum += hidden_layers[cmVar1 + y + 3] * weights[j][cmVar2 + y + 3];
+          sum += hidden_layers[cmVar1 + y + 4] * weights[j][cmVar2 + y + 4];
+          sum += hidden_layers[cmVar1 + y + 5] * weights[j][cmVar2 + y + 5];
+          sum += hidden_layers[cmVar1 + y + 6] * weights[j][cmVar2 + y + 6];
+          sum += hidden_layers[cmVar1 + y + 7] * weights[j][cmVar2 + y + 7];
         }
         for(;y<size;++y)
-            sum[0] += hidden_layers[cmVar1+y] * weights[j][cmVar2 + y];
+            sum += hidden_layers[cmVar1+y] * weights[j][cmVar2 + y];
 
-        sum[0] += sum[1]+sum[2]+sum[3];
-        sum[0] += biases[j][x];
-        hidden_layers[cmVar1 + size + x] = sigmoid(sum[0]);
+        sum += biases[j][x];
+        hidden_layers[cmVar1 + size + x] = sigmoid(sum);
       }
     }
     clock_gettime(CLOCK_MONOTONIC,&forE);
@@ -108,21 +112,24 @@ void recognition(float * images, float * network, int depth, int size, int * lab
     clock_gettime(CLOCK_MONOTONIC,&forS);
     for(x = 0; x < DIGIT_COUNT; ++x)
     {
-      sum = vdupq_n_f32(0); //we should reset sum here.
+      sum = 0; //we should reset sum here.
       cmVar1 = size==64 ? x << 6 : size * x;
-      for(y = 0; y < size-1; y+=4)
+      for(y = 0; y < size-1; y+=8)
       {
-        Avec = vld1q_f32(&hidden_layers[sizedepth - size + y]);
-        Bvec = vld1q_f32(&weights[depth][cmVar1+y]);
-        
-        sum = vmlaq_f32(sum, Avec, Bvec ); 
+        sum += hidden_layers[sizedepth - size + y] * weights[depth][cmVar1 + y];
+        sum += hidden_layers[sizedepth - size + y + 1] * weights[depth][cmVar1 + y + 1];
+        sum += hidden_layers[sizedepth - size + y + 2] * weights[depth][cmVar1 + y + 2];
+        sum += hidden_layers[sizedepth - size + y + 3] * weights[depth][cmVar1 + y + 3];
+        sum += hidden_layers[sizedepth - size + y + 4] * weights[depth][cmVar1 + y + 4];
+        sum += hidden_layers[sizedepth - size + y + 5] * weights[depth][cmVar1 + y + 5];
+        sum += hidden_layers[sizedepth - size + y + 6] * weights[depth][cmVar1 + y + 6];
+        sum += hidden_layers[sizedepth - size + y + 7] * weights[depth][cmVar1 + y + 7];
       }
       for(;y<size;++y)
-          sum[0] += hidden_layers[sizedepth - size + y]*weights[depth][cmVar1+y];
+          sum += hidden_layers[sizedepth - size + y]*weights[depth][cmVar1+y];
 
-      sum[0] += sum[1]+sum[2]+sum[3];
-      sum[0] += biases[depth][x];
-      output[x] = sigmoid(sum[0]);
+      sum += biases[depth][x];
+      output[x] = sigmoid(sum);
     }
     clock_gettime(CLOCK_MONOTONIC,&forE);
     for3_s += (forE.tv_sec - forS.tv_sec) + 1e-9 * (forE.tv_nsec - forS.tv_nsec);

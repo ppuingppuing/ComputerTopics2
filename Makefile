@@ -1,8 +1,8 @@
-CC=~/arm/bin/clang
-CFLAGS=-Wall -g -mcpu=cortex-a53 
+CC=~/arm/bin/aarch64-linux-android-gcc
+CFLAGS=-Wall -g -mcpu=cortex-a53 -fopenmp
 
 LIBS = -lm 
-LDFLAGS = ${LIBS} 
+LDFLAGS = ${LIBS} -fopenmp
 
 
 all: seq

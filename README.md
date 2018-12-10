@@ -1,3 +1,9 @@
-# Advanced Topics in Computer 2
-# 2018 - 2
-# Term Project
+### Optimizing MNIST code
+
+#### To Execute
+
+"./recognition_seq small.network result.out"
+
+#### Info about small size 
+size=64, depth=2
+

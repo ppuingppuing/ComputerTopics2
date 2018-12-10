@@ -1,9 +1,8 @@
 #define IMG_SIZE 784
 #define IMG_COUNT 50000
 #define DIGIT_COUNT 10
-#include<arm_neon.h>
-#include "omp.h"
 
+#include <omp.h>
 #include <time.h>
 
 extern struct timespec mainS, mainE, forS;
