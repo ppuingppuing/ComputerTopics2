@@ -53,6 +53,7 @@ void recognition(float * images, float * network, int depth, int size, int * lab
 
     // From the input layer to the first hidden layer
     clock_gettime(CLOCK_MONOTONIC,&forS);
+    #pragma omp parallel for private(x, y, cmVar1, sum)
     for(x = 0; x < size; ++x)
     {
       sum = 0; //we should reset sum here.
@@ -83,20 +84,21 @@ void recognition(float * images, float * network, int depth, int size, int * lab
     {
 
       cmVar1 = size == 64 ? (j-1) << 6 : size * (j-1);
+
       for(x = 0; x < size; ++x)
       {
        sum = 0; //we should reset sum here.
        cmVar2 = size == 64 ? x << 6 : size * x;
         for(y = 0; y < size-1; y+=8)
         {
-          sum += hidden_layers[cmVar1 + y] * weights[j][cmVar2 + y];
-          sum += hidden_layers[cmVar1 + y + 1] * weights[j][cmVar2 + y + 1];
-          sum += hidden_layers[cmVar1 + y + 2] * weights[j][cmVar2 + y + 2];
-          sum += hidden_layers[cmVar1 + y + 3] * weights[j][cmVar2 + y + 3];
-          sum += hidden_layers[cmVar1 + y + 4] * weights[j][cmVar2 + y + 4];
-          sum += hidden_layers[cmVar1 + y + 5] * weights[j][cmVar2 + y + 5];
-          sum += hidden_layers[cmVar1 + y + 6] * weights[j][cmVar2 + y + 6];
-          sum += hidden_layers[cmVar1 + y + 7] * weights[j][cmVar2 + y + 7];
+          sum += hidden_layers[cmVar1+y+0]*weights[j][cmVar2 + y + 0];
+          sum += hidden_layers[cmVar1+y+1]*weights[j][cmVar2 + y + 1];
+          sum += hidden_layers[cmVar1+y+2]*weights[j][cmVar2 + y + 2];
+          sum += hidden_layers[cmVar1+y+3]*weights[j][cmVar2 + y + 3];
+          sum += hidden_layers[cmVar1+y+4]*weights[j][cmVar2 + y + 4];
+          sum += hidden_layers[cmVar1+y+5]*weights[j][cmVar2 + y + 5];
+          sum += hidden_layers[cmVar1+y+6]*weights[j][cmVar2 + y + 6];
+          sum += hidden_layers[cmVar1+y+7]*weights[j][cmVar2 + y + 7];
         }
         for(;y<size;++y)
             sum += hidden_layers[cmVar1+y] * weights[j][cmVar2 + y];
