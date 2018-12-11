@@ -4,6 +4,7 @@
 
 #include <omp.h>
 #include <time.h>
+#include <arm_neon.h>
 
 extern struct timespec mainS, mainE, forS;
 extern struct timespec recS, recE, forE;
