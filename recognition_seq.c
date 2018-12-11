@@ -84,6 +84,7 @@ void recognition(float * images, float * network, int depth, int size, int * lab
 
       cmVar1 = size == 64 ? (j-1) << 6 : size * (j-1);
 
+     #pragma omp parallel for private(y, cmVar2, Avec, Bvec, sum)
       for(x = 0; x < size; ++x)
       {
        //sum = 0; //we should reset sum here.
