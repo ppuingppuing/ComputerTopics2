@@ -56,10 +56,9 @@ void recognition(float * images, float * network, int depth, int size, int * lab
 
     // From the input layer to the first hidden layer
     clock_gettime(CLOCK_MONOTONIC,&forS);
-
+    #pragma omp parallel for private( IS_X, y, Avec, Bvec, sum)
     for(x = 0; x < size; x++)
     {
-
       //sum = 0; //opt
       sum = vdupq_n_f32(0); //we should reset sum here.
       IS_X = IMG_SIZE*x;
@@ -81,36 +80,26 @@ void recognition(float * images, float * network, int depth, int size, int * lab
       hidden_layers[x] = sigmoid(sum[0]); //0~63 in hidden
     }
 
-
+    for(y=0;y<size;y+=4){         //For cache tiling. initialize with biases
+          data[y+0]=biases[1][y+0];
+          data[y+1]=biases[1][y+1];
+          data[y+2]=biases[1][y+2];
+          data[y+3]=biases[1][y+3];
+      }
 
     for(x = 3; x < size; x+=4)
     {
-      if(x==3){ 
-          for(y=0;y<size;y+=4){         //For cache tiling. initialize with biases
-              data[y+0]=biases[1][y+0];
-              data[y+1]=biases[1][y+1];
-              data[y+2]=biases[1][y+2];
-              data[y+3]=biases[1][y+3];
-          }
-      }
-
-
-
       //float h1,h2,h3,h0; // [LIM] don't move this line. For OpenMP
       float32x4_t H, res1, res2, res3, res4;
       float32x4_t C1, C2, C3, C4;
-    
-
-
-
+ 
       for(y=0;y<size;y+=4){         // cache tiling CODE
        
           res1 = vdupq_n_f32(0); //we should reset sum here.
           res2 = vdupq_n_f32(0); //we should reset sum here.
           res3 = vdupq_n_f32(0); //we should reset sum here.
           res4 = vdupq_n_f32(0); //we should reset sum here.
-	  
-          
+	       
           H = vld1q_f32(&hidden_layers[x-3]);
 
           C1 = vld1q_f32(&weights[1][x-3+size*(y+0)]);
@@ -132,15 +121,6 @@ void recognition(float * images, float * network, int depth, int size, int * lab
           //data[y+2] += hidden_layers[x]*weights[1][x+size*(y+2)];
           //data[y+3] += hidden_layers[x]*weights[1][x+size*(y+3)];
       }
-
-
-
-
-
-
-
-
-
 
     }
     for(x=0;x<size;x++){
